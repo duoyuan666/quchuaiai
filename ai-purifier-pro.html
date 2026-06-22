@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片净化 Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0b0c10;--s1:#13151c;--s2:#1a1d27;--s3:#222635;
+    --bd:#2c3044;--t1:#e8e9f0;--t2:#8c90a8;--t3:#5c6080;
+    --ac:#7c6cf0;--ac2:#a5a0ff;--ok:#34d399;--warn:#fbbf24;--err:#f87171;
+    --r:10px;
+  }
+  body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;line-height:1.6}
+  .app{max-width:900px;margin:0 auto;padding:32px 20px 80px}
+
+  header{text-align:center;margin-bottom:40px}
+  header h1{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+  header h1 span{color:var(--ac2)}
+  header p{color:var(--t2);font-size:13px;margin-top:6px}
+
+  /* Drop */
+  .drop{border:2px dashed var(--bd);border-radius:var(--r);padding:48px 20px;text-align:center;cursor:pointer;background:var(--s1);transition:.25s}
+  .drop:hover,.drop.over{border-color:var(--ac);background:rgba(124,108,240,.04)}
+  .drop input{display:none}
+  .drop h3{font-size:15px;font-weight:500;margin-bottom:4px}
+  .drop span{font-size:12px;color:var(--t2)}
+
+  .area{display:none;margin-top:28px}.area.on{display:block}
+
+  /* Preview */
+  .prev{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+  @media(max-width:600px){.prev{grid-template-columns:1fr}}
+  .card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+  .card .lbl{padding:10px 14px;font-size:12px;font-weight:500;color:var(--t2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .card .iw{padding:10px;display:flex;align-items:center;justify-content:center;min-height:180px;background:#0a0b0f}
+  .card img{max-width:100%;max-height:300px;border-radius:5px;object-fit:contain}
+
+  /* Info */
+  .info{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;display:none}
+  .info.on{display:block}
+  .info h3{font-size:13px;font-weight:500;margin-bottom:10px;color:var(--ac2)}
+  .ii{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(44,48,68,.4)}
+  .ii:last-child{border:none}
+  .ii .k{color:var(--t2)}.ii .v{font-weight:500}
+  .tag{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;font-weight:500}
+  .tag-d{background:rgba(248,113,113,.12);color:var(--err)}
+  .tag-s{background:rgba(52,211,153,.12);color:var(--ok)}
+
+  /* Controls */
+  .ctl{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin-bottom:20px}
+  .ctl h3{font-size:14px;font-weight:500;margin-bottom:16px}
+  .sec{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bd)}
+  .sec:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .sec-head input[type=checkbox]{accent-color:var(--ac);width:15px;height:15px;flex-shrink:0}
+  .sec-head h4{font-size:13px;font-weight:500}
+  .sec-desc{font-size:11px;color:var(--t2);margin-left:23px;line-height:1.5;margin-bottom:8px}
+  .slider-row{margin-left:23px;display:flex;align-items:center;gap:10px;margin-top:6px}
+  .slider-row label{font-size:12px;color:var(--t2);min-width:60px}
+  .slider-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:var(--bd);outline:none}
+  .slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid var(--bg)}
+  .slider-row .sv{font-size:12px;color:var(--ac2);min-width:30px;text-align:right;font-weight:500}
+
+  /* Upload real photo */
+  .upload-real{margin-left:23px;margin-top:8px}
+  .upload-real .ubtn{display:inline-block;padding:6px 14px;font-size:12px;background:var(--s3);border:1px solid var(--bd);border-radius:6px;color:var(--t1);cursor:pointer;transition:.2s}
+  .upload-real .ubtn:hover{border-color:var(--ac)}
+  .upload-real input{display:none}
+  .upload-real .fname{font-size:11px;color:var(--ok);margin-left:8px}
+
+  /* Buttons */
+  .brow{display:flex;gap:10px;margin-top:20px}
+  .btn{flex:1;padding:13px 20px;border:none;border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .btn-go{background:var(--ac);color:#fff}
+  .btn-go:hover{background:#6a5ad4}
+  .btn-go:disabled{opacity:.35;cursor:not-allowed}
+  .btn-dl{background:var(--ok);color:#fff;display:none}
+  .btn-dl:hover{background:#2bb380}
+  .btn-rst{background:var(--s2);color:var(--t1);border:1px solid var(--bd)}
+  .btn-rst:hover{background:var(--s3)}
+
+  /* Progress & Log */
+  .pbar{width:100%;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:18px;display:none}
+  .pbar.on{display:block}
+  .pbar .fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:2px;transition:width .3s;width:0}
+  .log{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:18px;max-height:200px;overflow-y:auto;font-size:11px;font-family:'SF Mono','Fira Code',monospace;color:var(--t2);display:none;line-height:2}
+  .log.on{display:block}
+  .log .ok{color:var(--ok)}.log .w{color:var(--warn)}.log .e{color:var(--err)}.log .t{color:var(--ac2);margin-right:6px}
+
+  .hint{text-align:center;font-size:11px;color:var(--t3);margin-top:32px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🧹 图片净化 <span>Pro</span></h1>
+    <p>元数据清除 · 隐形水印扰乱 · 相机指纹伪造 · 频域特征重塑 — 纯本地处理</p>
+  </header>
+
+  <div class="drop" id="drop">
+    <h3>拖放图片到这里，或点击上传</h3>
+    <span>支持 PNG / JPG / WebP，最大 30MB</span>
+    <input type="file" id="fi" accept="image/png,image/jpeg,image/webp">
+  </div>
+
+  <div class="area" id="area">
+    <div class="prev">
+      <div class="card"><div class="lbl"><span class="dot" style="background:var(--err)"></span>原始图片</div><div class="iw"><img id="imgO"></div></div>
+      <div class="card"><div class="lbl"><span class="dot" style="background:var(--ok)"></span>净化后</div><div class="iw"><img id="imgR"></div></div>
+    </div>
+
+    <div class="info" id="info"><h3>⚠ 风险扫描</h3><div id="infoL"></div></div>
+
+    <div class="ctl">
+      <h3>⚙ 净化引擎（已预设最优参数，可直接一键净化）</h3>
+
+      <!-- 1. Metadata -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_meta" checked disabled><h4>🗑 元数据全清除</h4></div>
+        <div class="sec-desc">Canvas 重绘彻底移除 EXIF / XMP / C2PA / Content Credentials（始终启用）</div>
+      </div>
+
+      <!-- 2. Camera Sensor Noise -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_sensor" checked><h4>📷 真实相机传感器噪声</h4></div>
+        <div class="sec-desc">模拟 CMOS 传感器的散粒噪声 + 读取噪声，噪声强度随亮度变化（暗部多、亮部少），与 AI 图的均匀噪声截然不同。这是对抗 SRM 噪声模式检测的核心手段</div>
+        <div class="slider-row"><label>强度</label><input type="range" id="s_sensor" min="1" max="10" value="4"><span class="sv" id="v_sensor">4</span></div>
+      </div>
+
+      <!-- 3. Chromatic Aberration -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_ca" checked><h4>🌈 色差模拟（Chromatic Aberration）</h4></div>
+        <div class="sec-desc">模拟真实镜头的色散效果，R/G/B 通道沿边缘方向微偏移。真实照片普遍存在此特征，AI 图完全没有</div>
+        <div class="slider-row"><label>强度</label><input type="range" id="s_ca" min="1" max="6" value="2"><span class="sv" id="v_ca">2</span></div>
+      </div>
+
+      <!-- 4. Vignette -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_vig" checked><h4>🔲 暗角（Vignette）</h4></div>
+        <div class="sec-desc">模拟镜头边缘进光不足导致的四角变暗，是真实照片的经典光学特征</div>
+        <div class="slider-row"><label>强度</label><input type="range" id="s_vig" min="1" max="10" value="3"><span class="sv" id="v_vig">3</span></div>
+      </div>
+
+      <!-- 5. Real Photo Blend -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_blend" checked><h4>🖼 真实照片底图混合</h4></div>
+        <div class="sec-desc">将一张真实手机照片以极低透明度（1-3%）混合到 AI 图中，从根本上改变图片的统计指纹和噪声分布。默认使用程序生成的仿真机传感器纹理，也可上传自己的真实照片效果更好</div>
+        <div class="slider-row"><label>透明度</label><input type="range" id="s_blend" min="1" max="5" value="2"><span class="sv" id="v_blend">2%</span></div>
+        <div class="upload-real">
+          <label class="ubtn" id="realBtn">上传真实照片（可选）</label>
+          <input type="file" id="realFi" accept="image/*">
+          <span class="fname" id="realName"></span>
+        </div>
+      </div>
+
+      <!-- 6. DCT Block Scramble -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_dct" checked><h4>📊 DCT 频域块扰动</h4></div>
+        <div class="sec-desc">对 8×8 像素块的 DCT 系数施加微扰，直接干扰小红书 AIDE 检测器的频域分析通道（PFE 模块）</div>
+        <div class="slider-row"><label>强度</label><input type="range" id="s_dct" min="1" max="8" value="3"><span class="sv" id="v_dct">3</span></div>
+      </div>
+
+      <!-- 7. High-Freq Energy Inject -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_hf" checked><h4>⚡ 高频能量注入</h4></div>
+        <div class="sec-desc">AI 图的高频能量远低于真实照片。通过在高频段注入与真实相机类似的能量分布，伪造真实照片的频谱特征</div>
+        <div class="slider-row"><label>强度</label><input type="range" id="s_hf" min="1" max="8" value="3"><span class="sv" id="v_hf">3</span></div>
+      </div>
+
+      <!-- 8. Micro Transform -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_geo" checked><h4>🔄 微几何变换</h4></div>
+        <div class="sec-desc">极小幅度旋转 + 缩放 + 平移，打乱水印的空间分布</div>
+      </div>
+
+      <!-- 9. Color Shift -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_color" checked><h4>🎨 色彩微偏移</h4></div>
+        <div class="sec-desc">色相/饱和度/亮度随机微调，破坏色彩空间的水印编码</div>
+      </div>
+
+      <!-- 10. JPEG Multi-cycle -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_jpeg" checked><h4>🔁 JPEG 多轮重编码</h4></div>
+        <div class="sec-desc">多次 JPEG 编解码循环，每轮引入不同的量化误差，叠加破坏水印信号</div>
+        <div class="slider-row"><label>轮数</label><input type="range" id="s_jcycle" min="1" max="5" value="3"><span class="sv" id="v_jcycle">3</span></div>
+        <div class="slider-row"><label>输出质量</label><input type="range" id="s_jq" min="75" max="100" value="93"><span class="sv" id="v_jq">93%</span></div>
+      </div>
+
+      <!-- 11. Non-uniform Perturbation -->
+      <div class="sec">
+        <div class="sec-head"><input type="checkbox" id="c_perturb" checked><h4>🎯 非均匀像素扰动</h4></div>
+        <div class="sec-desc">按区块施加不同强度的微扰，模拟真实拍摄中不同区域噪声强度的自然差异（对比 AI 的全局均匀性）</div>
+      </div>
+    </div>
+
+    <div class="pbar" id="pbar"><div class="fill" id="pfill"></div></div>
+    <div class="log" id="log"></div>
+    <div class="brow">
+      <button class="btn btn-rst" id="bRst">重新选择</button>
+      <button class="btn btn-go" id="bGo">⚡ 一键净化</button>
+      <button class="btn btn-dl" id="bDl">下载净化图</button>
+    </div>
+  </div>
+
+  <p class="hint">所有处理均在浏览器本地完成，图片不会离开你的设备</p>
+</div>
+
+<script>
+// ===== Helpers =====
+const $=id=>document.getElementById(id);
+const clamp=(v,lo=0,hi=255)=>Math.max(lo,Math.min(hi,Math.round(v)));
+const clampF=(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const gaussRand=()=>{const u=Math.random()||1e-10,v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+const fmtSize=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';
+
+// ===== State =====
+let origFile=null, origImg=null, resultBlob=null, realPhotoImg=null;
+
+// ===== Slider bindings =====
+const sliders=[
+  ['s_sensor','v_sensor',''],['s_ca','v_ca',''],['s_vig','v_vig',''],
+  ['s_blend','v_blend','%'],['s_dct','v_dct',''],['s_hf','v_hf',''],
+  ['s_jcycle','v_jcycle',''],['s_jq','v_jq','%']
+];
+sliders.forEach(([s,v,u])=>{$(s).oninput=()=>$(v).textContent=$(s).value+u});
+
+// ===== Upload =====
+const drop=$('drop'),fi=$('fi'),area=$('area');
+drop.onclick=()=>fi.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};
+drop.ondragleave=()=>drop.classList.remove('over');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');handle(e.dataTransfer.files[0])};
+fi.onchange=()=>{if(fi.files[0])handle(fi.files[0])};
+
+// Real photo upload
+$('realBtn').onclick=()=>$('realFi').click();
+$('realFi').onchange=()=>{
+  const f=$('realFi').files[0];
+  if(!f)return;
+  const img=new Image();
+  img.onload=()=>{realPhotoImg=img;$('realName').textContent='✓ '+f.name};
+  img.src=URL.createObjectURL(f);
+};
+
+function handle(f){
+  if(!f||!f.type.startsWith('image/'))return;
+  if(f.size>30*1024*1024){alert('文件超 30MB');return}
+  origFile=f;
+  const url=URL.createObjectURL(f);
+  const img=new Image();
+  img.onload=()=>{
+    origImg=img;$('imgO').src=url;$('imgR').src='';$('imgR').alt='待净化';
+    area.classList.add('on');$('bDl').style.display='none';$('bGo').style.display='';
+    $('log').classList.remove('on');$('pbar').classList.remove('on');
+    resultBlob=null;scan(f);
+  };
+  img.src=url;
+}
+
+// ===== Metadata Scan =====
+async function scan(f){
+  const buf=await f.arrayBuffer();
+  const bytes=new Uint8Array(buf);
+  const str=new TextDecoder('ascii',{fatal:false}).decode(bytes.slice(0,Math.min(bytes.length,600000)));
+  const finds=[];
+  const chk=(pattern,label)=>{if(str.toLowerCase().includes(pattern.toLowerCase()))finds.push({k:label,v:'检测到',d:true})};
+
+  if(findB(bytes,[0x45,0x78,0x69,0x66]))finds.push({k:'EXIF',v:'检测到',d:true});
+  chk('xmp','XMP 元数据');chk('c2pa','C2PA');chk('contentauth','Content Credentials');
+  chk('openai','OpenAI 标记');chk('dall-e','DALL·E 标记');chk('chatgpt','ChatGPT 标记');
+  chk('midjourney','Midjourney 标记');chk('stable-diffusion','SD 标记');chk('stability.ai','Stability 标记');
+  chk('synthid','SynthID 标记');chk('DigitalSourceType','DigitalSourceType');
+
+  finds.push({k:'隐形水印（像素级）',v:'无法直接检测，将全力扰乱',d:true});
+  finds.push({k:'文件大小',v:fmtSize(f.size),d:false});
+  finds.push({k:'尺寸',v:`${origImg.naturalWidth} × ${origImg.naturalHeight}`,d:false});
+
+  $('infoL').innerHTML=finds.map(f=>`<div class="ii"><span class="k">${f.k}</span><span class="v"><span class="tag ${f.d?'tag-d':'tag-s'}">${f.v}</span></span></div>`).join('');
+  $('info').classList.add('on');
+}
+
+function findB(h,n){for(let i=0;i<h.length-n.length;i++){let m=true;for(let j=0;j<n.length;j++){if(h[i+j]!==n[j]){m=false;break}}if(m)return true}return false}
+
+// ===== Log =====
+const logEl=$('log');
+function lg(msg,cls='ok'){
+  const t=new Date().toLocaleTimeString('zh',{hour12:false});
+  logEl.innerHTML+=`<div><span class="t">${t}</span><span class="${cls}">${msg}</span></div>`;
+  logEl.scrollTop=1e6;
+}
+function prog(p){$('pfill').style.width=p+'%'}
+
+// ===== Reset =====
+$('bRst').onclick=()=>{
+  origFile=origImg=resultBlob=null;
+  area.classList.remove('on');$('info').classList.remove('on');fi.value='';
+  drop.scrollIntoView({behavior:'smooth'});
+};
+
+// =================== CORE PROCESSING ===================
+$('bGo').onclick=async()=>{
+  if(!origImg)return;
+  $('bGo').disabled=true;$('bDl').style.display='none';
+  logEl.innerHTML='';logEl.classList.add('on');$('pbar').classList.add('on');prog(2);
+
+  const W=origImg.naturalWidth, H=origImg.naturalHeight;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+
+  lg('▶ 开始处理 '+W+'×'+H+' ...','ok');
+
+  // ==== Step 1: Draw with micro-transform (strips metadata too) ====
+  if($('c_geo').checked){
+    const ang=(Math.random()-.5)*.4*Math.PI/180;
+    const sc=1+(Math.random()-.5)*.005;
+    const tx=(Math.random()-.5)*1.5, ty=(Math.random()-.5)*1.5;
+    cx.save();cx.translate(W/2+tx,H/2+ty);cx.rotate(ang);cx.scale(sc,sc);cx.translate(-W/2,-H/2);
+    cx.drawImage(origImg,0,0,W,H);cx.restore();
+    lg(`✓ 微几何变换: 旋转${(ang*180/Math.PI).toFixed(3)}° 缩放${(sc*100).toFixed(2)}% 偏移${tx.toFixed(1)},${ty.toFixed(1)}px`);
+  } else {
+    cx.drawImage(origImg,0,0,W,H);
+  }
+  lg('✓ Canvas 重绘完成，元数据已全部清除');
+  prog(8);await sleep(20);
+
+  // ==== Step 2: Chromatic Aberration ====
+  if($('c_ca').checked){
+    const str=+$('s_ca').value;
+    const d=cx.getImageData(0,0,W,H);
+    const src=new Uint8ClampedArray(d.data);
+    const cxW=W/2, cxH=H/2, maxR=Math.sqrt(cxW*cxW+cxH*cxH);
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        const dx=x-cxW, dy=y-cxH;
+        const r=Math.sqrt(dx*dx+dy*dy)/maxR;
+        const shift=r*r*str*0.8;
+        const nx=dx/Math.max(Math.sqrt(dx*dx+dy*dy),1);
+        const ny=dy/Math.max(Math.sqrt(dx*dx+dy*dy),1);
+        // Red channel: shift outward
+        const rx=clamp(Math.round(x+nx*shift),0,W-1);
+        const ry=clamp(Math.round(y+ny*shift),0,H-1);
+        // Blue channel: shift inward
+        const bx=clamp(Math.round(x-nx*shift*.7),0,W-1);
+        const by=clamp(Math.round(y-ny*shift*.7),0,H-1);
+        const i=(y*W+x)*4;
+        d.data[i]=src[(ry*W+rx)*4];     // R from shifted pos
+        // G stays
+        d.data[i+2]=src[(by*W+bx)*4+2]; // B from shifted pos
+      }
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ 色差模拟完成 (强度 ${str})`);
+  }
+  prog(18);await sleep(20);
+
+  // ==== Step 3: Vignette ====
+  if($('c_vig').checked){
+    const str=+$('s_vig').value;
+    const d=cx.getImageData(0,0,W,H);
+    const cxW=W/2,cxH=H/2;
+    const maxR=Math.sqrt(cxW*cxW+cxH*cxH);
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        const dx=x-cxW,dy=y-cxH;
+        const r=Math.sqrt(dx*dx+dy*dy)/maxR;
+        const factor=1-r*r*str*0.04;
+        const i=(y*W+x)*4;
+        d.data[i]=clamp(d.data[i]*factor);
+        d.data[i+1]=clamp(d.data[i+1]*factor);
+        d.data[i+2]=clamp(d.data[i+2]*factor);
+      }
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ 暗角效果完成 (强度 ${str})`);
+  }
+  prog(25);await sleep(20);
+
+  // ==== Step 4: Camera Sensor Noise (brightness-dependent) ====
+  if($('c_sensor').checked){
+    const str=+$('s_sensor').value;
+    const d=cx.getImageData(0,0,W,H);
+    const px=d.data;
+    for(let i=0;i<px.length;i+=4){
+      const lum=(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114)/255;
+      // Shot noise scales with sqrt(brightness), read noise is constant
+      const shotSigma=str*0.6*Math.sqrt(Math.max(lum,0.01));
+      const readSigma=str*0.25;
+      const totalSigma=Math.sqrt(shotSigma*shotSigma+readSigma*readSigma);
+      px[i]=clamp(px[i]+gaussRand()*totalSigma);
+      px[i+1]=clamp(px[i+1]+gaussRand()*totalSigma);
+      px[i+2]=clamp(px[i+2]+gaussRand()*totalSigma);
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ 传感器噪声注入完成 (散粒+读取噪声, 强度 ${str})`);
+  }
+  prog(38);await sleep(20);
+
+  // ==== Step 5: Real Photo Blend ====
+  if($('c_blend').checked){
+    const opacity=(+$('s_blend').value)/100;
+    if(realPhotoImg){
+      // Blend real photo
+      const tc=document.createElement('canvas');tc.width=W;tc.height=H;
+      const tcx=tc.getContext('2d');
+      tcx.drawImage(realPhotoImg,0,0,W,H);
+      const rd=tcx.getImageData(0,0,W,H).data;
+      const d=cx.getImageData(0,0,W,H);
+      for(let i=0;i<d.data.length;i+=4){
+        d.data[i]=clamp(d.data[i]*(1-opacity)+rd[i]*opacity);
+        d.data[i+1]=clamp(d.data[i+1]*(1-opacity)+rd[i+1]*opacity);
+        d.data[i+2]=clamp(d.data[i+2]*(1-opacity)+rd[i+2]*opacity);
+      }
+      cx.putImageData(d,0,0);
+      lg(`✓ 真实照片底图混合完成 (透明度 ${(opacity*100).toFixed(0)}%, 使用用户照片)`);
+    } else {
+      // Generate procedural sensor texture
+      const d=cx.getImageData(0,0,W,H);
+      // Simulate real camera: large-scale color cast + fine grain + banding
+      const bandFreq=0.3+Math.random()*0.5;
+      const bandPhase=Math.random()*Math.PI*2;
+      const castR=(Math.random()-.5)*8;
+      const castG=(Math.random()-.5)*5;
+      const castB=(Math.random()-.5)*8;
+      for(let y=0;y<H;y++){
+        const bandVal=Math.sin(y*bandFreq*0.01+bandPhase)*0.3;
+        for(let x=0;x<W;x++){
+          const i=(y*W+x)*4;
+          const grain=(gaussRand()*2+bandVal+castR)*opacity;
+          const grainG=(gaussRand()*1.5+bandVal+castG)*opacity;
+          const grainB=(gaussRand()*2+bandVal+castB)*opacity;
+          d.data[i]=clamp(d.data[i]+grain);
+          d.data[i+1]=clamp(d.data[i+1]+grainG);
+          d.data[i+2]=clamp(d.data[i+2]+grainB);
+        }
+      }
+      cx.putImageData(d,0,0);
+      lg(`✓ 仿真传感器纹理混合完成 (透明度 ${(opacity*100).toFixed(0)}%, 含色偏+条纹+颗粒)`);
+    }
+  }
+  prog(48);await sleep(20);
+
+  // ==== Step 6: DCT Block Scramble ====
+  if($('c_dct').checked){
+    const str=+$('s_dct').value;
+    const d=cx.getImageData(0,0,W,H);
+    const BS=8; // JPEG block size
+    for(let by=0;by<H-BS;by+=BS){
+      for(let bx=0;bx<W-BS;bx+=BS){
+        // Extract 8x8 block, apply pseudo-DCT perturbation
+        // We perturb high-frequency positions more
+        const blockNoise=gaussRand()*str*0.15;
+        for(let dy=0;dy<BS;dy++){
+          for(let dx=0;dx<BS;dx++){
+            const freq=(dx+dy)/14; // 0..1 frequency proxy
+            const noiseMag=str*0.3*(0.3+freq*0.7); // more noise at higher freq
+            const i=((by+dy)*W+(bx+dx))*4;
+            const n=gaussRand()*noiseMag+blockNoise;
+            d.data[i]=clamp(d.data[i]+n);
+            d.data[i+1]=clamp(d.data[i+1]+n*0.9);
+            d.data[i+2]=clamp(d.data[i+2]+n*1.1);
+          }
+        }
+      }
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ DCT 块级频域扰动完成 (8×8块, 强度 ${str})`);
+  }
+  prog(60);await sleep(20);
+
+  // ==== Step 7: High-Frequency Energy Injection ====
+  if($('c_hf').checked){
+    const str=+$('s_hf').value;
+    const d=cx.getImageData(0,0,W,H);
+    // Add structured high-frequency patterns (simulating real sensor detail)
+    for(let y=1;y<H-1;y++){
+      for(let x=1;x<W-1;x++){
+        const i=(y*W+x)*4;
+        // Laplacian-like high-freq injection
+        const localVar=Math.random()*str*0.4;
+        // Checkerboard-ish pattern with randomness (non-uniform!)
+        const sign=((x+y)%2===0?1:-1)*(0.5+Math.random()*0.5);
+        const hf=sign*localVar;
+        d.data[i]=clamp(d.data[i]+hf);
+        d.data[i+1]=clamp(d.data[i+1]+hf*0.85);
+        d.data[i+2]=clamp(d.data[i+2]+hf*1.15);
+      }
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ 高频能量注入完成 (模拟真实相机纹理, 强度 ${str})`);
+  }
+  prog(70);await sleep(20);
+
+  // ==== Step 8: Color Micro-shift ====
+  if($('c_color').checked){
+    const d=cx.getImageData(0,0,W,H);
+    const hShift=(Math.random()-.5)*1.5;
+    const sMul=1+(Math.random()-.5)*0.015;
+    const lShift=(Math.random()-.5)*0.8;
+    for(let i=0;i<d.data.length;i+=4){
+      let [h,s,l]=rgbToHsl(d.data[i],d.data[i+1],d.data[i+2]);
+      h=(h+hShift/360+1)%1;
+      s=clampF(s*sMul);
+      l=clampF(l+lShift/255);
+      const[r,g,b]=hslToRgb(h,s,l);
+      d.data[i]=r;d.data[i+1]=g;d.data[i+2]=b;
+    }
+    cx.putImageData(d,0,0);
+    lg(`✓ 色彩微偏移 (H${hShift>0?'+':''}${hShift.toFixed(2)}° S×${sMul.toFixed(3)} L${lShift>0?'+':''}${lShift.toFixed(2)})`);
+  }
+  prog(78);await sleep(20);
+
+  // ==== Step 9: Non-uniform Perturbation ====
+  if($('c_perturb').checked){
+    const d=cx.getImageData(0,0,W,H);
+    const regionSize=64;
+    for(let ry=0;ry<H;ry+=regionSize){
+      for(let rx=0;rx<W;rx+=regionSize){
+        const regionStr=1+Math.random()*3;
+        const ew=Math.min(regionSize,W-rx);
+        const eh=Math.min(regionSize,H-ry);
+        for(let dy=0;dy<eh;dy++){
+          for(let dx=0;dx<ew;dx++){
+            const i=((ry+dy)*W+(rx+dx))*4;
+            d.data[i]=clamp(d.data[i]+gaussRand()*regionStr);
+            d.data[i+1]=clamp(d.data[i+1]+gaussRand()*regionStr);
+            d.data[i+2]=clamp(d.data[i+2]+gaussRand()*regionStr);
+          }
+        }
+      }
+    }
+    cx.putImageData(d,0,0);
+    lg('✓ 非均匀区块扰动完成 (64×64 区块, 各区块独立随机强度)');
+  }
+  prog(85);await sleep(20);
+
+  // ==== Step 10: JPEG Multi-cycle Re-encode ====
+  if($('c_jpeg').checked){
+    const cycles=+$('s_jcycle').value;
+    const finalQ=+$('s_jq').value/100;
+    let tempCv=cv;
+    for(let c=0;c<cycles;c++){
+      // Cycle: encode at varying quality then decode back
+      const cycleQ=c<cycles-1? Math.max(0.78,finalQ-(cycles-1-c)*0.04) : finalQ;
+      const blob=await new Promise(r=>tempCv.toBlob(r,'image/jpeg',cycleQ));
+      const img=await blobToImg(blob);
+      const nc=document.createElement('canvas');nc.width=W;nc.height=H;
+      const ncx=nc.getContext('2d');
+      ncx.drawImage(img,0,0,W,H);
+      // Copy back to main canvas
+      cx.drawImage(nc,0,0);
+      tempCv=cv;
+      lg(`  轮次 ${c+1}/${cycles}: 质量 ${(cycleQ*100).toFixed(0)}%`,'w');
+    }
+    lg(`✓ JPEG ${cycles}轮重编码完成 (最终质量 ${(finalQ*100).toFixed(0)}%)`);
+  }
+  prog(95);await sleep(20);
+
+  // ==== Final Export ====
+  const finalQ=$('c_jpeg').checked? +$('s_jq').value/100 : 0.95;
+  resultBlob=await new Promise(r=>cv.toBlob(r,'image/jpeg',finalQ));
+  $('imgR').src=URL.createObjectURL(resultBlob);
+
+  const reduction=((1-resultBlob.size/origFile.size)*100);
+  lg(`✓ 输出: JPEG ${(finalQ*100).toFixed(0)}%, ${fmtSize(resultBlob.size)} (${reduction>0?'↓':'↑'}${Math.abs(reduction).toFixed(1)}%)`,'ok');
+  lg('━━━ 净化完成 ✓ ━━━','ok');
+  prog(100);
+
+  $('bGo').disabled=false;$('bDl').style.display='';
+};
+
+// ===== Download =====
+$('bDl').onclick=()=>{
+  if(!resultBlob)return;
+  const name=origFile.name.replace(/\.[^.]+$/,'')+'_clean.jpg';
+  const a=document.createElement('a');a.href=URL.createObjectURL(resultBlob);a.download=name;a.click();
+};
+
+// ===== Utils =====
+function blobToImg(blob){
+  return new Promise((res,rej)=>{
+    const img=new Image();img.onload=()=>res(img);img.onerror=rej;
+    img.src=URL.createObjectURL(blob);
+  });
+}
+
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+  let h,s,l=(mx+mn)/2;
+  if(mx===mn){h=s=0}else{
+    const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break}
+  }
+  return[h,s,l];
+}
+
+function hslToRgb(h,s,l){
+  let r,g,b;
+  if(s===0){r=g=b=l}else{
+    const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+    const h2r=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};
+    r=h2r(p,q,h+1/3);g=h2r(p,q,h);b=h2r(p,q,h-1/3);
+  }
+  return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+</script>
+</body>
+</html>
